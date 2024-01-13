@@ -68,7 +68,7 @@ modelo.add(Dense(1))
 
 modelo.compile(optimizer='adam', loss='mean_squared_error')
 
-modelo.fit(treinamento_x, treinamento_y, epochs=2, batch_size=1)
+modelo.fit(treinamento_x, treinamento_y, epochs=1, batch_size=1)
 
 dados_teste = dados_entre_0_e_1[tamanho_dados_treinamento - 60:, :]
 
@@ -103,5 +103,29 @@ plt.plot(df_teste[['Close', 'predicoes']])
 plt.legend(['Treinamento', 'Real', 'Predições'], loc=2, prop={'size':16})
 plt.show()
 
+df_teste.sort_index()
+df_teste
 
+df_teste['variacao_percentual_acao'] = df_teste['Close'].pct_change()
+df_teste['variacao_percentual_modelo'] = df_teste["predicoes"].pct_change()
 
+df_teste = df_teste.dropna()
+
+df_teste['var_acao_maior_menor_que_zero'] = np.where(df_teste['variacao_percentual_acao'] > 0,
+                                                     True, False)
+df_teste['var_modelo_maior_menor_que_zero'] = np.where(df_teste['variacao_percentual_modelo'] > 0,
+                                                     True, False)
+df_teste['acertou_o_lado'] = np.where(df_teste['var_acao_maior_menor_que_zero'] == df_teste['var_modelo_maior_menor_que_zero'],
+                                      True, False)
+df_teste['variacao_percentual_acao_abs'] = df_teste['variacao_percentual_acao'].abs()
+df_teste
+
+acertou_o_lado = df_teste['acertou_o_lado'].sum()/len(df_teste['acertou_o_lado'])
+errou_lado = 1 - acertou_o_lado
+
+media_lucro = df_teste.groupby('acertou_o_lado')['variacao_percentual_acao_abs'].mean()
+exp_mat_lucro = acertou_o_lado * media_lucro.iloc[1] - media_lucro.iloc[0] * errou_lado
+
+ganho_sobre_perda = media_lucro.iloc[1] / media_lucro.iloc[0]
+
+print(media_lucro,ganho_sobre_perda, acertou_o_lado, (exp_mat_lucro * 100))

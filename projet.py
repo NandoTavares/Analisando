@@ -129,3 +129,31 @@ exp_mat_lucro = acertou_o_lado * media_lucro.iloc[1] - media_lucro.iloc[0] * err
 ganho_sobre_perda = media_lucro.iloc[1] / media_lucro.iloc[0]
 
 print(media_lucro,ganho_sobre_perda, acertou_o_lado, (exp_mat_lucro * 100))
+
+data_hoje = datetime.now()
+
+#se quiser escolher um dia tu faz tipo
+#data_hoje = datetime.now() - timedelta(days = 1)
+
+if data_hoje.hour > 18:
+    final = data_hoje
+    inicial = datetime.now() - timedelta(days = 252)
+
+else:
+    final = data_hoje - timedelta(days = 1)
+    inicial = datetime.now() - timedelta(days = 252)
+
+
+cotacoes = yf.download(acao, start=inicial, end=final)
+ultimos_60_dias = cotacao[-60:].reshape(-1, 1)
+ultimos_60_dias_escalado = escalador.transform(ultimos_60_dias)
+
+teste_x = []
+teste_x.append(ultimos_60_dias_escalado)
+teste_x = np.array(teste_x)
+teste_x = teste_x.reshape(teste_x.shape[0], teste_x.shape[1], 1)
+
+previsao_de_preco = modelo.predict(teste_x)
+previsao_de_preco = escalador.inverse_transform(previsao_de_preco)
+
+print(previsao_de_preco)
